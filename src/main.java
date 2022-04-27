@@ -4,9 +4,11 @@ import com.fazecast.jSerialComm.SerialPortEvent;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -32,7 +34,7 @@ public class main {
             @Override
             public Void call() throws Exception
             {
-                writeTemp();
+                ///writeTemp();
                 return null;
             }
         };
@@ -51,8 +53,22 @@ public class main {
         InputStream in = comPort.getInputStream();
         try
         {
+            char[] temp = {};
+            char[] voidC = {};
             for (;;){
-                System.out.print((char)in.read());
+                char c = (char)in.read();;
+                int i = 0;
+                for(int j = 0; c != 'F'; j++){
+                    temp[i] = c;
+                }
+                temp
+                while(i <= temp.length){
+                    System.out.print(temp[i]);
+                    i--;
+                }
+                if(temp[temp.length-1] == 'F'){
+                    temp = voidC;
+                }
                /*try
                 {
                     //start the threads and wait for them to finish
@@ -68,19 +84,55 @@ public class main {
 
     }
 
-    private static void writeTemp() throws IOException {
-        Random r = new Random();
-            double min = -50;
-            double max = 100;
-            double randomValue = min + (max - min) * r.nextDouble();
-            String stringDouble = String.valueOf(randomValue);
+    static void writeTemp(String temp) throws IOException {
+        URL url = new URL("https://temperature-detector-36e8f-default-rtdb.firebaseio.com/PIC_DEVICE/temp.json");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod("PUT");
+        httpConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        httpConn.setDoOutput(true);
+        OutputStreamWriter writer = new OutputStreamWriter(httpConn.getOutputStream());
+        writer.write("{\"data\": \"" + temp + "\"}");
+        writer.flush();
+        writer.close();
+        httpConn.getOutputStream().close();
+        InputStream responseStream = httpConn.getResponseCode() / 100 == 2 ? httpConn.getInputStream() : httpConn.getErrorStream();
+
+    }
+
+    static String getOn() throws IOException {
+        URL url = new URL("https://temperature-detector-36e8f-default-rtdb.firebaseio.com/PIC_DEVICE/on/data.json");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod("GET");
+
+        InputStream responseStream = httpConn.getResponseCode() / 100 == 2
+                ? httpConn.getInputStream()
+                : httpConn.getErrorStream();
+        Scanner s = new Scanner(responseStream).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
+    }
+}
+
+/*
+if((char)in.read() != 'I' || (char)in.read() != 'F'){
+                    num = (char)in.read() + "";
+                } else if((char)in.read() == 'F') {
+                    System.out.println(num);
+                    num = "";
+                }
+                System.out.print((char)in.read());
+                OutputStream out = comPort.getOutputStream();
+                out.write(getOn().getBytes(StandardCharsets.UTF_8));
+
+
+static void writeTemp(String temp) throws IOException {
+
             URL url = new URL("https://temperature-detector-36e8f-default-rtdb.firebaseio.com/PIC_DEVICE/temp.json");
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
             httpConn.setRequestMethod("PUT");
             httpConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             httpConn.setDoOutput(true);
             OutputStreamWriter writer = new OutputStreamWriter(httpConn.getOutputStream());
-            writer.write("{\"data\": \"" + stringDouble + "\"}");
+            writer.write("{\"data\": \"" + temp + "\"}");
             writer.flush();
             writer.close();
             httpConn.getOutputStream().close();
@@ -88,7 +140,9 @@ public class main {
 
     }
 
-    private static void getOn() throws IOException {
+
+
+static String getOn() throws IOException {
             URL url = new URL("https://temperature-detector-36e8f-default-rtdb.firebaseio.com/PIC_DEVICE/on/data.json");
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
             httpConn.setRequestMethod("GET");
@@ -97,8 +151,6 @@ public class main {
                     ? httpConn.getInputStream()
                     : httpConn.getErrorStream();
             Scanner s = new Scanner(responseStream).useDelimiter("\\A");
-            String response = s.hasNext() ? s.next() : "";
-            System.out.println(response);
-
+        return s.hasNext() ? s.next() : "";
     }
-}
+*/
